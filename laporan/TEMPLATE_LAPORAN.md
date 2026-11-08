@@ -517,4 +517,4 @@ Pengukuran dilakukan sebanyak tiga kali pengulangan pada dataset `kelas-1m` (`99
 * **Konfigurasi Produksi:** Lingkungan praktikum ini memakai 1 broker Redpanda (*replication factor* 1) yang belum menguji skenario *failover* multi-broker, mematikan AQE (`spark.sql.adaptive.enabled = false`) serta *auto-broadcast* (`-1`) untuk kepentingan pengujian manual, dan memakai `.createOrReplace()` pada penulisan Iceberg. Untuk penerapan produksi, AQE sebaiknya diaktifkan serta diperlukan mekanisme *upsert/merge* dan kontrol idempotensi yang lebih kuat.
 
 ## Lampiran
-Link repo Git; output quality.json; screenshot Spark UI dengan job ID; screenshot MinIO dan Iceberg.
+[Link repo Git](https://github.com/Bolu-naga/Analisis1mData.git); output [quality.json](../hasil/kelas-1m/quality.json); ![screenshot MinIO dan Iceberg](Screenshot/MiniIO.png) ![screenshot MinIO dan Iceberg](Screenshot/RedPanda.png).
