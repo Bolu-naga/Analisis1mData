@@ -1,0 +1,143 @@
+== Physical Plan ==
+* HashAggregate (23)
++- Exchange (22)
+   +- * HashAggregate (21)
+      +- * Project (20)
+         +- * SortMergeJoin Inner (19)
+            :- * Sort (13)
+            :  +- Exchange (12)
+            :     +- * Filter (11)
+            :        +- InMemoryTableScan (1)
+            :              +- InMemoryRelation (2)
+            :                    +- SortAggregate (10)
+            :                       +- * Sort (9)
+            :                          +- Exchange (8)
+            :                             +- SortAggregate (7)
+            :                                +- * Sort (6)
+            :                                   +- * Project (5)
+            :                                      +- * Filter (4)
+            :                                         +- Scan json  (3)
+            +- * Sort (18)
+               +- Exchange (17)
+                  +- * Project (16)
+                     +- * Project (15)
+                        +- * Range (14)
+
+
+(1) InMemoryTableScan
+Output [2]: [product_id#4, amount#6L]
+Arguments: [product_id#4, amount#6L], [isnotnull(product_id#4)]
+
+(2) InMemoryRelation
+Arguments: [run_id#0, order_id#1L, sale_date#35, city#26, product_id#4, quantity#5, amount#6L], CachedRDDBuilder(org.apache.spark.sql.execution.columnar.DefaultCachedBatchSerializer@6ff803a,StorageLevel(disk, memory, 1 replicas),SortAggregate(key=[run_id#0, order_id#1L], functions=[first(sale_date#35, false), first(city#26, false), first(product_id#4, false), first(quantity#5, false), first(amount#6L, false)], output=[run_id#0, order_id#1L, sale_date#62, city#54, product_id#56, quantity#58, amount#60L])
++- *(2) Sort [run_id#0 ASC NULLS FIRST, order_id#1L ASC NULLS FIRST], false, 0
+   +- Exchange hashpartitioning(run_id#0, order_id#1L, 8), ENSURE_REQUIREMENTS, [plan_id=50]
+      +- SortAggregate(key=[run_id#0, order_id#1L], functions=[partial_first(sale_date#35, false), partial_first(city#26, false), partial_first(product_id#4, false), partial_first(quantity#5, false), partial_first(amount#6L, false)], output=[run_id#0, order_id#1L, first#73, valueSet#74, first#75, valueSet#76, first#77, valueSet#78, first#79, valueSet#80, first#81L, valueSet#82])
+         +- *(1) Sort [run_id#0 ASC NULLS FIRST, order_id#1L ASC NULLS FIRST], false, 0
+            +- *(1) Project [run_id#0, order_id#1L, initcap(trim(city#3, None)) AS city#26, product_id#4, quantity#5, amount#6L, cast(gettimestamp(event_time#2, yyyy-MM-dd'T'HH:mm:ss, TimestampType, Some(Etc/UTC), false) as date) AS sale_date#35]
+               +- *(1) Filter (((((((((isnotnull(quantity#5) AND isnotnull(product_id#4)) AND isnotnull(order_id#1L)) AND NOT (initcap(trim(city#3, None)) = )) AND isnotnull(cast(gettimestamp(event_time#2, yyyy-MM-dd'T'HH:mm:ss, TimestampType, Some(Etc/UTC), false) as date))) AND isnotnull(amount#6L)) AND (amount#6L >= 0)) AND (quantity#5 > 0)) AND (product_id#4 >= 1)) AND (product_id#4 <= 200))
+                  +- FileScan json [run_id#0,order_id#1L,event_time#2,city#3,product_id#4,quantity#5,amount#6L] Batched: false, DataFilters: [isnotnull(quantity#5), isnotnull(product_id#4), isnotnull(order_id#1L), NOT (initcap(trim(city#3..., Format: JSON, Location: InMemoryFileIndex(484 paths)[s3a://raw/events/run_id=kelas-1m/partition=0/offset-000000008100-000..., PartitionFilters: [], PushedFilters: [IsNotNull(quantity), IsNotNull(product_id), IsNotNull(order_id), IsNotNull(amount), GreaterThanO..., ReadSchema: struct<run_id:string,order_id:bigint,event_time:string,city:string,product_id:int,quantity:int,am...
+,None)
+
+(3) Scan json 
+Output [7]: [run_id#0, order_id#1L, event_time#2, city#3, product_id#4, quantity#5, amount#6L]
+Batched: false
+Location: InMemoryFileIndex [s3a://raw/events/run_id=kelas-1m/partition=0/offset-000000008100-000000009289.jsonl, ... 483 entries]
+PushedFilters: [IsNotNull(quantity), IsNotNull(product_id), IsNotNull(order_id), IsNotNull(amount), GreaterThanOrEqual(amount,0), GreaterThan(quantity,0), GreaterThanOrEqual(product_id,1), LessThanOrEqual(product_id,200)]
+ReadSchema: struct<run_id:string,order_id:bigint,event_time:string,city:string,product_id:int,quantity:int,amount:bigint>
+
+(4) Filter [codegen id : 1]
+Input [7]: [run_id#0, order_id#1L, event_time#2, city#3, product_id#4, quantity#5, amount#6L]
+Condition : (((((((((isnotnull(quantity#5) AND isnotnull(product_id#4)) AND isnotnull(order_id#1L)) AND NOT (initcap(trim(city#3, None)) = )) AND isnotnull(cast(gettimestamp(event_time#2, yyyy-MM-dd'T'HH:mm:ss, TimestampType, Some(Etc/UTC), false) as date))) AND isnotnull(amount#6L)) AND (amount#6L >= 0)) AND (quantity#5 > 0)) AND (product_id#4 >= 1)) AND (product_id#4 <= 200))
+
+(5) Project [codegen id : 1]
+Output [7]: [run_id#0, order_id#1L, initcap(trim(city#3, None)) AS city#26, product_id#4, quantity#5, amount#6L, cast(gettimestamp(event_time#2, yyyy-MM-dd'T'HH:mm:ss, TimestampType, Some(Etc/UTC), false) as date) AS sale_date#35]
+Input [7]: [run_id#0, order_id#1L, event_time#2, city#3, product_id#4, quantity#5, amount#6L]
+
+(6) Sort [codegen id : 1]
+Input [7]: [run_id#0, order_id#1L, city#26, product_id#4, quantity#5, amount#6L, sale_date#35]
+Arguments: [run_id#0 ASC NULLS FIRST, order_id#1L ASC NULLS FIRST], false, 0
+
+(7) SortAggregate
+Input [7]: [run_id#0, order_id#1L, city#26, product_id#4, quantity#5, amount#6L, sale_date#35]
+Keys [2]: [run_id#0, order_id#1L]
+Functions [5]: [partial_first(sale_date#35, false), partial_first(city#26, false), partial_first(product_id#4, false), partial_first(quantity#5, false), partial_first(amount#6L, false)]
+Aggregate Attributes [10]: [first#63, valueSet#64, first#65, valueSet#66, first#67, valueSet#68, first#69, valueSet#70, first#71L, valueSet#72]
+Results [12]: [run_id#0, order_id#1L, first#73, valueSet#74, first#75, valueSet#76, first#77, valueSet#78, first#79, valueSet#80, first#81L, valueSet#82]
+
+(8) Exchange
+Input [12]: [run_id#0, order_id#1L, first#73, valueSet#74, first#75, valueSet#76, first#77, valueSet#78, first#79, valueSet#80, first#81L, valueSet#82]
+Arguments: hashpartitioning(run_id#0, order_id#1L, 8), ENSURE_REQUIREMENTS, [plan_id=50]
+
+(9) Sort [codegen id : 2]
+Input [12]: [run_id#0, order_id#1L, first#73, valueSet#74, first#75, valueSet#76, first#77, valueSet#78, first#79, valueSet#80, first#81L, valueSet#82]
+Arguments: [run_id#0 ASC NULLS FIRST, order_id#1L ASC NULLS FIRST], false, 0
+
+(10) SortAggregate
+Input [12]: [run_id#0, order_id#1L, first#73, valueSet#74, first#75, valueSet#76, first#77, valueSet#78, first#79, valueSet#80, first#81L, valueSet#82]
+Keys [2]: [run_id#0, order_id#1L]
+Functions [5]: [first(sale_date#35, false), first(city#26, false), first(product_id#4, false), first(quantity#5, false), first(amount#6L, false)]
+Aggregate Attributes [5]: [first(sale_date#35)()#61, first(city#26)()#53, first(product_id#4)()#55, first(quantity#5)()#57, first(amount#6L)()#59L]
+Results [7]: [run_id#0, order_id#1L, first(sale_date#35)()#61 AS sale_date#62, first(city#26)()#53 AS city#54, first(product_id#4)()#55 AS product_id#56, first(quantity#5)()#57 AS quantity#58, first(amount#6L)()#59L AS amount#60L]
+
+(11) Filter [codegen id : 1]
+Input [2]: [product_id#4, amount#6L]
+Condition : isnotnull(product_id#4)
+
+(12) Exchange
+Input [2]: [product_id#4, amount#6L]
+Arguments: hashpartitioning(product_id#4, 8), ENSURE_REQUIREMENTS, [plan_id=304]
+
+(13) Sort [codegen id : 2]
+Input [2]: [product_id#4, amount#6L]
+Arguments: [product_id#4 ASC NULLS FIRST], false, 0
+
+(14) Range [codegen id : 3]
+Output [1]: [id#322L]
+Arguments: Range (1, 201, step=1, splits=Some(4))
+
+(15) Project [codegen id : 3]
+Output [1]: [cast(id#322L as int) AS product_id#324]
+Input [1]: [id#322L]
+
+(16) Project [codegen id : 3]
+Output [2]: [product_id#324, CASE WHEN ((product_id#324 % 4) = 0) THEN Elektronik WHEN ((product_id#324 % 4) = 1) THEN Fashion WHEN ((product_id#324 % 4) = 2) THEN Rumah Tangga ELSE Olahraga END AS category#326]
+Input [1]: [product_id#324]
+
+(17) Exchange
+Input [2]: [product_id#324, category#326]
+Arguments: hashpartitioning(product_id#324, 8), ENSURE_REQUIREMENTS, [plan_id=310]
+
+(18) Sort [codegen id : 4]
+Input [2]: [product_id#324, category#326]
+Arguments: [product_id#324 ASC NULLS FIRST], false, 0
+
+(19) SortMergeJoin [codegen id : 5]
+Left keys [1]: [product_id#4]
+Right keys [1]: [product_id#324]
+Join type: Inner
+Join condition: None
+
+(20) Project [codegen id : 5]
+Output [2]: [amount#6L, category#326]
+Input [4]: [product_id#4, amount#6L, product_id#324, category#326]
+
+(21) HashAggregate [codegen id : 5]
+Input [2]: [amount#6L, category#326]
+Keys [1]: [category#326]
+Functions [2]: [partial_count(1), partial_sum(amount#6L)]
+Aggregate Attributes [2]: [count#2191L, sum#2192L]
+Results [3]: [category#326, count#2193L, sum#2194L]
+
+(22) Exchange
+Input [3]: [category#326, count#2193L, sum#2194L]
+Arguments: hashpartitioning(category#326, 8), ENSURE_REQUIREMENTS, [plan_id=319]
+
+(23) HashAggregate [codegen id : 6]
+Input [3]: [category#326, count#2193L, sum#2194L]
+Keys [1]: [category#326]
+Functions [2]: [count(1), sum(amount#6L)]
+Aggregate Attributes [2]: [count(1)#2079L, sum(amount#6L)#2081L]
+Results [3]: [category#326, count(1)#2079L AS orders#2080L, sum(amount#6L)#2081L AS gross_sales#2082L]
+
+

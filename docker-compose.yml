@@ -1,0 +1,115 @@
+
+name: praktikum-mg5-mg7
+
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v26.2.5
+    command:
+      - redpanda
+      - start
+      - --mode
+      - dev-container
+      - --smp
+      - "1"
+      - --kafka-addr
+      - internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - internal://redpanda:9092,external://localhost:19092
+    ports:
+      - "19092:19092"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    networks: [labnet]
+
+  console:
+    image: docker.redpanda.com/redpandadata/console:v3.12.0
+    entrypoint: /bin/sh
+    command: -c 'echo "$$CONSOLE_CONFIG_FILE" > /tmp/config.yml; /app/console'
+    environment:
+      CONFIG_FILEPATH: /tmp/config.yml
+      CONSOLE_CONFIG_FILE: |
+        kafka:
+          brokers: ["redpanda:9092"]
+    ports:
+      - "8088:8080"
+    depends_on:
+      - redpanda
+    networks: [labnet]
+
+  minio:
+    image: chainguard/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: labadmin
+      MINIO_ROOT_PASSWORD: labpassword123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks: [labnet]
+
+  rest:
+    image: tabulario/iceberg-rest:1.6.0
+    environment:
+      AWS_ACCESS_KEY_ID: labadmin
+      AWS_SECRET_ACCESS_KEY: labpassword123
+      AWS_REGION: us-east-1
+      CATALOG_WAREHOUSE: s3://warehouse/
+      CATALOG_IO__IMPL: org.apache.iceberg.aws.s3.S3FileIO
+      CATALOG_S3_ENDPOINT: http://minio:9000
+      CATALOG_S3_PATH__STYLE__ACCESS: "true"
+    ports:
+      - "8181:8181"
+    depends_on:
+      - minio
+    networks: [labnet]
+
+  tools:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.tools
+    working_dir: /opt/lab
+    volumes:
+      - ./:/opt/lab
+    environment:
+      BROKER: redpanda:9092
+      S3_ENDPOINT: http://minio:9000
+      AWS_ACCESS_KEY_ID: labadmin
+      AWS_SECRET_ACCESS_KEY: labpassword123
+      AWS_DEFAULT_REGION: us-east-1
+    depends_on:
+      - redpanda
+      - minio
+    command: sleep infinity
+    networks: [labnet]
+
+  spark:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.spark
+    working_dir: /opt/lab
+    volumes:
+      - ./:/opt/lab
+      - spark_ivy:/root/.ivy2
+    environment:
+      AWS_ACCESS_KEY_ID: labadmin
+      AWS_SECRET_ACCESS_KEY: labpassword123
+      AWS_REGION: us-east-1
+      PYSPARK_PYTHON: python3
+    ports:
+      - "4040:4040"
+    depends_on:
+      - rest
+      - minio
+    command: sleep infinity
+    networks: [labnet]
+
+networks:
+  labnet: {}
+
+volumes:
+  redpanda_data: {}
+  minio_data: {}
+  spark_ivy: {}
+  

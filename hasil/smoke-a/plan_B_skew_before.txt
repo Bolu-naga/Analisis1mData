@@ -1,0 +1,111 @@
+== Physical Plan ==
+* HashAggregate (15)
++- * HashAggregate (14)
+   +- InMemoryTableScan (1)
+         +- InMemoryRelation (2)
+               +- Exchange (13)
+                  +- InMemoryTableScan (3)
+                        +- InMemoryRelation (4)
+                              +- SortAggregate (12)
+                                 +- * Sort (11)
+                                    +- Exchange (10)
+                                       +- SortAggregate (9)
+                                          +- * Sort (8)
+                                             +- * Project (7)
+                                                +- * Filter (6)
+                                                   +- Scan json  (5)
+
+
+(1) InMemoryTableScan
+Output [2]: [city#26, amount#6L]
+Arguments: [city#26, amount#6L]
+
+(2) InMemoryRelation
+Arguments: [run_id#0, order_id#1L, sale_date#35, city#26, product_id#4, quantity#5, amount#6L], CachedRDDBuilder(org.apache.spark.sql.execution.columnar.DefaultCachedBatchSerializer@2c331c37,StorageLevel(disk, memory, 1 replicas),Exchange hashpartitioning(city#26, 8), REPARTITION_BY_NUM, [plan_id=125]
++- InMemoryTableScan [run_id#0, order_id#1L, sale_date#35, city#26, product_id#4, quantity#5, amount#6L]
+      +- InMemoryRelation [run_id#0, order_id#1L, sale_date#35, city#26, product_id#4, quantity#5, amount#6L], StorageLevel(disk, memory, 1 replicas)
+            +- SortAggregate(key=[run_id#0, order_id#1L], functions=[first(sale_date#35, false), first(city#26, false), first(product_id#4, false), first(quantity#5, false), first(amount#6L, false)], output=[run_id#0, order_id#1L, sale_date#62, city#54, product_id#56, quantity#58, amount#60L])
+               +- *(2) Sort [run_id#0 ASC NULLS FIRST, order_id#1L ASC NULLS FIRST], false, 0
+                  +- Exchange hashpartitioning(run_id#0, order_id#1L, 8), ENSURE_REQUIREMENTS, [plan_id=50]
+                     +- SortAggregate(key=[run_id#0, order_id#1L], functions=[partial_first(sale_date#35, false), partial_first(city#26, false), partial_first(product_id#4, false), partial_first(quantity#5, false), partial_first(amount#6L, false)], output=[run_id#0, order_id#1L, first#73, valueSet#74, first#75, valueSet#76, first#77, valueSet#78, first#79, valueSet#80, first#81L, valueSet#82])
+                        +- *(1) Sort [run_id#0 ASC NULLS FIRST, order_id#1L ASC NULLS FIRST], false, 0
+                           +- *(1) Project [run_id#0, order_id#1L, initcap(trim(city#3, None)) AS city#26, product_id#4, quantity#5, amount#6L, cast(gettimestamp(event_time#2, yyyy-MM-dd'T'HH:mm:ss, TimestampType, Some(Etc/UTC), false) as date) AS sale_date#35]
+                              +- *(1) Filter (((((((((isnotnull(quantity#5) AND isnotnull(product_id#4)) AND isnotnull(order_id#1L)) AND NOT (initcap(trim(city#3, None)) = )) AND isnotnull(cast(gettimestamp(event_time#2, yyyy-MM-dd'T'HH:mm:ss, TimestampType, Some(Etc/UTC), false) as date))) AND isnotnull(amount#6L)) AND (amount#6L >= 0)) AND (quantity#5 > 0)) AND (product_id#4 >= 1)) AND (product_id#4 <= 200))
+                                 +- FileScan json [run_id#0,order_id#1L,event_time#2,city#3,product_id#4,quantity#5,amount#6L] Batched: false, DataFilters: [isnotnull(quantity#5), isnotnull(product_id#4), isnotnull(order_id#1L), NOT (initcap(trim(city#3..., Format: JSON, Location: InMemoryFileIndex(10 paths)[s3a://raw/events/run_id=smoke-a/partition=0/offset-000000000000-00000..., PartitionFilters: [], PushedFilters: [IsNotNull(quantity), IsNotNull(product_id), IsNotNull(order_id), IsNotNull(amount), GreaterThanO..., ReadSchema: struct<run_id:string,order_id:bigint,event_time:string,city:string,product_id:int,quantity:int,am...
+,None)
+
+(3) InMemoryTableScan
+Output [7]: [run_id#0, order_id#1L, sale_date#35, city#26, product_id#4, quantity#5, amount#6L]
+Arguments: [run_id#0, order_id#1L, sale_date#35, city#26, product_id#4, quantity#5, amount#6L]
+
+(4) InMemoryRelation
+Arguments: [run_id#0, order_id#1L, sale_date#35, city#26, product_id#4, quantity#5, amount#6L], CachedRDDBuilder(org.apache.spark.sql.execution.columnar.DefaultCachedBatchSerializer@2c331c37,StorageLevel(disk, memory, 1 replicas),SortAggregate(key=[run_id#0, order_id#1L], functions=[first(sale_date#35, false), first(city#26, false), first(product_id#4, false), first(quantity#5, false), first(amount#6L, false)], output=[run_id#0, order_id#1L, sale_date#62, city#54, product_id#56, quantity#58, amount#60L])
++- *(2) Sort [run_id#0 ASC NULLS FIRST, order_id#1L ASC NULLS FIRST], false, 0
+   +- Exchange hashpartitioning(run_id#0, order_id#1L, 8), ENSURE_REQUIREMENTS, [plan_id=50]
+      +- SortAggregate(key=[run_id#0, order_id#1L], functions=[partial_first(sale_date#35, false), partial_first(city#26, false), partial_first(product_id#4, false), partial_first(quantity#5, false), partial_first(amount#6L, false)], output=[run_id#0, order_id#1L, first#73, valueSet#74, first#75, valueSet#76, first#77, valueSet#78, first#79, valueSet#80, first#81L, valueSet#82])
+         +- *(1) Sort [run_id#0 ASC NULLS FIRST, order_id#1L ASC NULLS FIRST], false, 0
+            +- *(1) Project [run_id#0, order_id#1L, initcap(trim(city#3, None)) AS city#26, product_id#4, quantity#5, amount#6L, cast(gettimestamp(event_time#2, yyyy-MM-dd'T'HH:mm:ss, TimestampType, Some(Etc/UTC), false) as date) AS sale_date#35]
+               +- *(1) Filter (((((((((isnotnull(quantity#5) AND isnotnull(product_id#4)) AND isnotnull(order_id#1L)) AND NOT (initcap(trim(city#3, None)) = )) AND isnotnull(cast(gettimestamp(event_time#2, yyyy-MM-dd'T'HH:mm:ss, TimestampType, Some(Etc/UTC), false) as date))) AND isnotnull(amount#6L)) AND (amount#6L >= 0)) AND (quantity#5 > 0)) AND (product_id#4 >= 1)) AND (product_id#4 <= 200))
+                  +- FileScan json [run_id#0,order_id#1L,event_time#2,city#3,product_id#4,quantity#5,amount#6L] Batched: false, DataFilters: [isnotnull(quantity#5), isnotnull(product_id#4), isnotnull(order_id#1L), NOT (initcap(trim(city#3..., Format: JSON, Location: InMemoryFileIndex(10 paths)[s3a://raw/events/run_id=smoke-a/partition=0/offset-000000000000-00000..., PartitionFilters: [], PushedFilters: [IsNotNull(quantity), IsNotNull(product_id), IsNotNull(order_id), IsNotNull(amount), GreaterThanO..., ReadSchema: struct<run_id:string,order_id:bigint,event_time:string,city:string,product_id:int,quantity:int,am...
+,None)
+
+(5) Scan json 
+Output [7]: [run_id#0, order_id#1L, event_time#2, city#3, product_id#4, quantity#5, amount#6L]
+Batched: false
+Location: InMemoryFileIndex [s3a://raw/events/run_id=smoke-a/partition=0/offset-000000000000-000000002699.jsonl, ... 9 entries]
+PushedFilters: [IsNotNull(quantity), IsNotNull(product_id), IsNotNull(order_id), IsNotNull(amount), GreaterThanOrEqual(amount,0), GreaterThan(quantity,0), GreaterThanOrEqual(product_id,1), LessThanOrEqual(product_id,200)]
+ReadSchema: struct<run_id:string,order_id:bigint,event_time:string,city:string,product_id:int,quantity:int,amount:bigint>
+
+(6) Filter [codegen id : 1]
+Input [7]: [run_id#0, order_id#1L, event_time#2, city#3, product_id#4, quantity#5, amount#6L]
+Condition : (((((((((isnotnull(quantity#5) AND isnotnull(product_id#4)) AND isnotnull(order_id#1L)) AND NOT (initcap(trim(city#3, None)) = )) AND isnotnull(cast(gettimestamp(event_time#2, yyyy-MM-dd'T'HH:mm:ss, TimestampType, Some(Etc/UTC), false) as date))) AND isnotnull(amount#6L)) AND (amount#6L >= 0)) AND (quantity#5 > 0)) AND (product_id#4 >= 1)) AND (product_id#4 <= 200))
+
+(7) Project [codegen id : 1]
+Output [7]: [run_id#0, order_id#1L, initcap(trim(city#3, None)) AS city#26, product_id#4, quantity#5, amount#6L, cast(gettimestamp(event_time#2, yyyy-MM-dd'T'HH:mm:ss, TimestampType, Some(Etc/UTC), false) as date) AS sale_date#35]
+Input [7]: [run_id#0, order_id#1L, event_time#2, city#3, product_id#4, quantity#5, amount#6L]
+
+(8) Sort [codegen id : 1]
+Input [7]: [run_id#0, order_id#1L, city#26, product_id#4, quantity#5, amount#6L, sale_date#35]
+Arguments: [run_id#0 ASC NULLS FIRST, order_id#1L ASC NULLS FIRST], false, 0
+
+(9) SortAggregate
+Input [7]: [run_id#0, order_id#1L, city#26, product_id#4, quantity#5, amount#6L, sale_date#35]
+Keys [2]: [run_id#0, order_id#1L]
+Functions [5]: [partial_first(sale_date#35, false), partial_first(city#26, false), partial_first(product_id#4, false), partial_first(quantity#5, false), partial_first(amount#6L, false)]
+Aggregate Attributes [10]: [first#63, valueSet#64, first#65, valueSet#66, first#67, valueSet#68, first#69, valueSet#70, first#71L, valueSet#72]
+Results [12]: [run_id#0, order_id#1L, first#73, valueSet#74, first#75, valueSet#76, first#77, valueSet#78, first#79, valueSet#80, first#81L, valueSet#82]
+
+(10) Exchange
+Input [12]: [run_id#0, order_id#1L, first#73, valueSet#74, first#75, valueSet#76, first#77, valueSet#78, first#79, valueSet#80, first#81L, valueSet#82]
+Arguments: hashpartitioning(run_id#0, order_id#1L, 8), ENSURE_REQUIREMENTS, [plan_id=50]
+
+(11) Sort [codegen id : 2]
+Input [12]: [run_id#0, order_id#1L, first#73, valueSet#74, first#75, valueSet#76, first#77, valueSet#78, first#79, valueSet#80, first#81L, valueSet#82]
+Arguments: [run_id#0 ASC NULLS FIRST, order_id#1L ASC NULLS FIRST], false, 0
+
+(12) SortAggregate
+Input [12]: [run_id#0, order_id#1L, first#73, valueSet#74, first#75, valueSet#76, first#77, valueSet#78, first#79, valueSet#80, first#81L, valueSet#82]
+Keys [2]: [run_id#0, order_id#1L]
+Functions [5]: [first(sale_date#35, false), first(city#26, false), first(product_id#4, false), first(quantity#5, false), first(amount#6L, false)]
+Aggregate Attributes [5]: [first(sale_date#35)()#61, first(city#26)()#53, first(product_id#4)()#55, first(quantity#5)()#57, first(amount#6L)()#59L]
+Results [7]: [run_id#0, order_id#1L, first(sale_date#35)()#61 AS sale_date#62, first(city#26)()#53 AS city#54, first(product_id#4)()#55 AS product_id#56, first(quantity#5)()#57 AS quantity#58, first(amount#6L)()#59L AS amount#60L]
+
+(13) Exchange
+Input [7]: [run_id#0, order_id#1L, sale_date#35, city#26, product_id#4, quantity#5, amount#6L]
+Arguments: hashpartitioning(city#26, 8), REPARTITION_BY_NUM, [plan_id=125]
+
+(14) HashAggregate [codegen id : 1]
+Input [2]: [city#26, amount#6L]
+Keys [1]: [city#26]
+Functions [2]: [partial_count(1), partial_sum(amount#6L)]
+Aggregate Attributes [2]: [count#1179L, sum#1180L]
+Results [3]: [city#26, count#1181L, sum#1182L]
+
+(15) HashAggregate [codegen id : 1]
+Input [3]: [city#26, count#1181L, sum#1182L]
+Keys [1]: [city#26]
+Functions [2]: [count(1), sum(amount#6L)]
+Aggregate Attributes [2]: [count(1)#1067L, sum(amount#6L)#1069L]
+Results [3]: [city#26, count(1)#1067L AS orders#1068L, sum(amount#6L)#1069L AS gross_sales#1070L]
+
+
